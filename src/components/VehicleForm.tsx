@@ -21,6 +21,8 @@ const STATES = [
 
 export default function VehicleForm() {
   const [loading, setLoading] = useState(false);
+  const [useExternalRegistration, setUseExternalRegistration] = useState(false);
+  const [externalRegistrationNumber, setExternalRegistrationNumber] = useState('');
   const [formData, setFormData] = useState({
     plate: '',
     state: '',
@@ -59,6 +61,13 @@ export default function VehicleForm() {
           chassisObservation: vehicleData.chassisObservation,
           city: vehicleData.city
         });
+        // If registration number is different from auto-generated sequence,
+        // assume it was manually entered
+        const lastAutoNumber = await getLastAutoRegistrationNumber();
+        if (vehicleData.registrationNumber < lastAutoNumber - 100) {
+          setUseExternalRegistration(true);
+          setExternalRegistrationNumber(vehicleData.registrationNumber.toString());
+        }
       }
     } catch (error) {
       console.error('Error fetching vehicle:', error);
@@ -66,7 +75,7 @@ export default function VehicleForm() {
     }
   };
 
-  const getNextRegistrationNumber = async () => {
+  const getLastAutoRegistrationNumber = async () => {
     const vehiclesRef = collection(db, 'vehicles');
     const q = query(vehiclesRef, orderBy('registrationNumber', 'desc'), limit(1));
     const snapshot = await getDocs(q);
@@ -76,7 +85,18 @@ export default function VehicleForm() {
     }
     
     const lastVehicle = snapshot.docs[0].data() as Vehicle;
-    return lastVehicle.registrationNumber + 1;
+    return lastVehicle.registrationNumber;
+  };
+
+  const validateExternalRegistration = (number: string) => {
+    const parsedNumber = parseInt(number);
+    if (isNaN(parsedNumber)) {
+      throw new Error('O número de registro deve ser um número válido');
+    }
+    if (parsedNumber <= 0) {
+      throw new Error('O número de registro deve ser maior que zero');
+    }
+    return parsedNumber;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,14 +104,25 @@ export default function VehicleForm() {
     setLoading(true);
 
     try {
+      let registrationNumber: number;
+
+      if (useExternalRegistration) {
+        if (!externalRegistrationNumber.trim()) {
+          throw new Error('Por favor, insira um número de registro');
+        }
+        registrationNumber = validateExternalRegistration(externalRegistrationNumber);
+      } else {
+        registrationNumber = await getLastAutoRegistrationNumber() + 1;
+      }
+
       if (isEditing) {
         await updateDoc(doc(db, 'vehicles', id!), {
           ...formData,
+          registrationNumber,
           updatedAt: new Date().toISOString()
         });
         toast.success('Veículo atualizado com sucesso!');
       } else {
-        const registrationNumber = await getNextRegistrationNumber();
         const vehicleData: Omit<Vehicle, 'id'> = {
           ...formData,
           registrationNumber,
@@ -104,7 +135,7 @@ export default function VehicleForm() {
       navigate('/');
     } catch (error) {
       console.error('Error saving vehicle:', error);
-      toast.error(isEditing ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo');
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar veículo');
     } finally {
       setLoading(false);
     }
@@ -116,6 +147,37 @@ export default function VehicleForm() {
         {isEditing ? 'Editar Veículo' : 'Cadastro de Veículo'}
       </h2>
       
+      <div className="mb-6">
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            id="useExternalRegistration"
+            checked={useExternalRegistration}
+            onChange={(e) => setUseExternalRegistration(e.target.checked)}
+            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+          />
+          <label htmlFor="useExternalRegistration" className="ml-2 block text-sm text-gray-900">
+            Usar número de registro externo
+          </label>
+        </div>
+
+        {useExternalRegistration && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Número de Registro
+            </label>
+            <input
+              type="number"
+              required
+              className="w-full p-2 border rounded-md"
+              value={externalRegistrationNumber}
+              onChange={(e) => setExternalRegistrationNumber(e.target.value)}
+              placeholder="Digite o número de registro"
+            />
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
