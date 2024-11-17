@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Vehicle, VehicleType, City } from '../types';
 import { format } from 'date-fns';
@@ -38,6 +38,15 @@ export default function VehicleSearch() {
   });
   const [results, setResults] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState<string>('');
+
+  // Função para normalizar a data (evitar problema de fuso horário)
+  const normalizeDate = (date: string) => {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0); // Garante que a hora seja 00:00 UTC
+    return normalizedDate;
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +98,12 @@ export default function VehicleSearch() {
       if (searchParams.startInspectionDate || searchParams.endInspectionDate) {
         vehicles = vehicles.filter(vehicle => {
           const inspectionDate = new Date(vehicle.inspectionDate);
-          const startDate = searchParams.startInspectionDate ? new Date(searchParams.startInspectionDate) : null;
-          const endDate = searchParams.endInspectionDate ? new Date(searchParams.endInspectionDate) : null;
+          const startDate = searchParams.startInspectionDate
+            ? normalizeDate(searchParams.startInspectionDate)
+            : null;
+          const endDate = searchParams.endInspectionDate
+            ? normalizeDate(searchParams.endInspectionDate)
+            : null;
           
           return (!startDate || inspectionDate >= startDate) && 
                  (!endDate || inspectionDate <= endDate);
@@ -101,8 +114,12 @@ export default function VehicleSearch() {
         vehicles = vehicles.filter(vehicle => {
           if (!vehicle.releaseDate) return false;
           const releaseDate = new Date(vehicle.releaseDate);
-          const startDate = searchParams.startReleaseDate ? new Date(searchParams.startReleaseDate) : null;
-          const endDate = searchParams.endReleaseDate ? new Date(searchParams.endReleaseDate) : null;
+          const startDate = searchParams.startReleaseDate
+            ? normalizeDate(searchParams.startReleaseDate)
+            : null;
+          const endDate = searchParams.endReleaseDate
+            ? normalizeDate(searchParams.endReleaseDate)
+            : null;
           
           return (!startDate || releaseDate >= startDate) && 
                  (!endDate || releaseDate <= endDate);
@@ -122,10 +139,10 @@ export default function VehicleSearch() {
     try {
       const docRef = doc(db, 'vehicles', vehicleId);
       await updateDoc(docRef, {
-        releaseDate: date
+        releaseDate: normalizeDate(date).toISOString() // Ajuste correto da data
       });
       toast.success('Data de liberação atualizada com sucesso');
-      handleSearch(new Event('submit'));
+      handleSearch(new Event('submit')); // Atualizar a lista após a edição
     } catch (error) {
       console.error('Error updating release date:', error);
       toast.error('Erro ao atualizar data de liberação');
@@ -234,171 +251,104 @@ export default function VehicleSearch() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Possui Chave
-            </label>
-            <select
-              className="w-full p-2 border rounded-md"
-              value={searchParams.hasKey}
-              onChange={(e) => setSearchParams({...searchParams, hasKey: e.target.value})}
+          <div className="flex items-center gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data de Liberação
+              </label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded-md"
+                value={searchParams.startReleaseDate}
+                onChange={(e) => setSearchParams({...searchParams, startReleaseDate: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Até
+              </label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded-md"
+                value={searchParams.endReleaseDate}
+                onChange={(e) => setSearchParams({...searchParams, endReleaseDate: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 text-white px-6 py-2 rounded-md shadow-md hover:bg-indigo-700"
             >
-              <option value="">Todos</option>
-              <option value="true">Sim</option>
-              <option value="false">Não</option>
-            </select>
+              {loading ? 'Carregando...' : 'Buscar'}
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status de Liberação
-            </label>
-            <select
-              className="w-full p-2 border rounded-md"
-              value={searchParams.isReleased}
-              onChange={(e) => setSearchParams({...searchParams, isReleased: e.target.value})}
-            >
-              <option value="">Todos</option>
-              <option value="true">Liberados</option>
-              <option value="false">Não Liberados</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Vistoria (Início)
-            </label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-md"
-              value={searchParams.startInspectionDate}
-              onChange={(e) => setSearchParams({...searchParams, startInspectionDate: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Vistoria (Fim)
-            </label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-md"
-              value={searchParams.endInspectionDate}
-              onChange={(e) => setSearchParams({...searchParams, endInspectionDate: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Liberação (Início)
-            </label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-md"
-              value={searchParams.startReleaseDate}
-              onChange={(e) => setSearchParams({...searchParams, startReleaseDate: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Liberação (Fim)
-            </label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-md"
-              value={searchParams.endReleaseDate}
-              onChange={(e) => setSearchParams({...searchParams, endReleaseDate: e.target.value})}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition disabled:opacity-50 flex items-center justify-center"
-          >
-            <Search className="h-5 w-5 mr-2" />
-            {loading ? 'Buscando...' : 'Buscar'}
-          </button>
         </div>
       </form>
 
-      {results.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b">
-            <p className="text-lg font-semibold">Total de veículos encontrados: {results.length}</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Registro
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Placa
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Marca/Modelo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cidade
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data Vistoria
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data Liberação
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {results.map((vehicle) => (
-                  <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {vehicle.registrationNumber}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.plate} - {vehicle.state}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.brand} {vehicle.model}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.city}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.vehicleType}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(vehicle.inspectionDate), 'dd/MM/yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.releaseDate ? (
-                        format(new Date(vehicle.releaseDate), 'dd/MM/yyyy')
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="date"
-                            className="p-1 border rounded"
-                            onChange={(e) => handleUpdateReleaseDate(vehicle.id!, e.target.value)}
-                          />
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Resultados da Busca</h2>
+
+        <table className="min-w-full">
+          <thead className="border-b bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Placa</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Marca</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Modelo</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Data Liberação</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map(vehicle => (
+              <tr key={vehicle.id} className="border-b hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.plate}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.brand}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.model}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {editingVehicle === vehicle.id ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="date"
+                        value={editDate}
+                        className="p-1 border rounded"
+                        onChange={(e) => setEditDate(e.target.value)}
+                      />
+                      <button
+                        onClick={async () => {
+                          await handleUpdateReleaseDate(vehicle.id, editDate);
+                          setEditingVehicle(null); // Sair do modo de edição
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  ) : vehicle.releaseDate ? (
+                    <span>{format(new Date(vehicle.releaseDate), 'dd/MM/yyyy')}</span>
+                  ) : (
+                    <span>—</span>
+                  )}
+                  <button
+                    onClick={() => {
+                      setEditingVehicle(vehicle.id);
+                      setEditDate(vehicle.releaseDate ? vehicle.releaseDate.split('T')[0] : '');
+                    }}
+                    className="text-indigo-600 hover:text-indigo-900 ml-2"
+                  >
+                    Editar
+                  </button>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  {/* Ações como editar e excluir */}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
