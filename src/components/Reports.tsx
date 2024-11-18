@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Vehicle, City, VehicleType } from '../types';
-import { FileText } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
@@ -62,6 +62,7 @@ export default function Reports() {
     };
 
     filteredVehicles.forEach(vehicle => {
+      // Initialize type stats if not exists
       if (!stats.byType[vehicle.vehicleType]) {
         stats.byType[vehicle.vehicleType] = {
           total: 0,
@@ -69,18 +70,22 @@ export default function Reports() {
           notReleased: 0
         };
       }
-
+      
+      // Count by type
       stats.byType[vehicle.vehicleType].total++;
       if (vehicle.releaseDate) {
         stats.byType[vehicle.vehicleType].released++;
       } else {
         stats.byType[vehicle.vehicleType].notReleased++;
       }
-
+      
+      // Count by key
       vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
-
+      
+      // Count by state
       stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
-
+      
+      // Initialize city stats if not exists
       if (!stats.byCity[vehicle.city]) {
         stats.byCity[vehicle.city] = {
           total: 0,
@@ -88,7 +93,8 @@ export default function Reports() {
           notReleased: 0
         };
       }
-
+      
+      // Count by city
       stats.byCity[vehicle.city].total++;
       if (vehicle.releaseDate) {
         stats.byCity[vehicle.city].released++;
@@ -104,57 +110,72 @@ export default function Reports() {
     const doc = new jsPDF();
     const stats = generateStats(filteredVehicles);
 
-    const addTextWithCheck = (text: string, x: number, y: number) => {
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(text, x, y);
-      return y + 7; // Increment Y position for the next line
-    };
-
     doc.setFontSize(16);
     doc.text('Relatório de Veículos', 14, 20);
 
     doc.setFontSize(12);
-    let yPos = 30;
-    yPos = addTextWithCheck(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`, 14, yPos);
-    yPos = addTextWithCheck(`Cidade: ${selectedCity || 'Todas'}`, 14, yPos);
-    yPos += 10;
+    doc.text(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`, 14, 30);
+    doc.text(`Cidade: ${selectedCity || 'Todas'}`, 14, 37);
+
+    let yPos = 50;
+
+    // Add a helper to check if a page break is needed
+    const checkPageBreak = (additionalHeight) => {
+      if (yPos + additionalHeight > doc.internal.pageSize.height - 20) {
+        doc.addPage();
+        yPos = 20; // Reset y position
+      }
+    };
 
     // Add total statistics
-    yPos = addTextWithCheck('Resumo Geral:', 14, yPos);
-    yPos = addTextWithCheck(`Total de Veículos: ${stats.total}`, 20, yPos);
-    yPos = addTextWithCheck(`Veículos Liberados: ${stats.released}`, 20, yPos);
-    yPos = addTextWithCheck(`Veículos Não Liberados: ${stats.notReleased}`, 20, yPos);
-    yPos += 10;
+    doc.text('Resumo Geral:', 14, yPos);
+    yPos += 7;
+    doc.text(`Total de Veículos: ${stats.total}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Veículos Liberados: ${stats.released}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Veículos Não Liberados: ${stats.notReleased}`, 20, yPos);
+    yPos += 14;
 
     // Add city statistics
-    yPos = addTextWithCheck('Por Cidade:', 14, yPos);
+    doc.text('Por Cidade:', 14, yPos);
+    yPos += 7;
     Object.entries(stats.byCity).forEach(([city, data]) => {
-      yPos = addTextWithCheck(`${city}:`, 20, yPos);
-      yPos = addTextWithCheck(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
+      checkPageBreak(14);
+      doc.text(`${city}:`, 20, yPos);
+      yPos += 7;
+      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
+      yPos += 7;
     });
-    yPos += 10;
+    yPos += 7;
 
     // Add vehicle type statistics
-    yPos = addTextWithCheck('Por Tipo de Veículo:', 14, yPos);
+    doc.text('Por Tipo de Veículo:', 14, yPos);
+    yPos += 7;
     Object.entries(stats.byType).forEach(([type, data]) => {
-      yPos = addTextWithCheck(`${type}:`, 20, yPos);
-      yPos = addTextWithCheck(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
+      checkPageBreak(14);
+      doc.text(`${type}:`, 20, yPos);
+      yPos += 7;
+      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
+      yPos += 7;
     });
-    yPos += 10;
+    yPos += 7;
 
     // Add key statistics
-    yPos = addTextWithCheck('Status das Chaves:', 14, yPos);
-    yPos = addTextWithCheck(`Com Chave: ${stats.byKey.yes}`, 20, yPos);
-    yPos = addTextWithCheck(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
-    yPos += 10;
+    doc.text('Status das Chaves:', 14, yPos);
+    yPos += 7;
+    doc.text(`Com Chave: ${stats.byKey.yes}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
+    yPos += 14;
 
-    // Add state statistics with multiple pages if needed
-    yPos = addTextWithCheck('Por Estado:', 14, yPos);
+    // Add state statistics
+    doc.text('Por Estado:', 14, yPos);
+    yPos += 7;
     Object.entries(stats.byState).forEach(([state, count]) => {
-      yPos = addTextWithCheck(`${state}: ${count}`, 20, yPos);
+      checkPageBreak(14);
+      doc.text(`${state}: ${count}`, 20, yPos);
+      yPos += 7;
     });
 
     doc.save('relatorio-detalhado-veiculos.pdf');
@@ -220,35 +241,18 @@ export default function Reports() {
 
         <button
           onClick={() => exportToPDF(filteredVehicles)}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md mt-4 hover:bg-indigo-700 flex items-center justify-center"
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
         >
-          <FileText className="mr-2" /> Gerar Relatório PDF
+          <Download className="w-4 h-4 mr-2" />
+          Baixar Relatório PDF
         </button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-2 text-gray-700">Resumo Geral</h3>
-          <p>Total de Veículos: {stats.total}</p>
-          <p>Veículos Liberados: {stats.released}</p>
-          <p>Veículos Não Liberados: {stats.notReleased}</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-2 text-gray-700">Status das Chaves</h3>
-          <p>Com Chave: {stats.byKey.yes}</p>
-          <p>Sem Chave: {stats.byKey.no}</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-2 text-gray-700">Por Tipo de Veículo</h3>
-          {Object.entries(stats.byType).map(([type, data]) => (
-            <div key={type} className="mb-2">
-              <p>{type}: {data.total} total</p>
-              <p>Liberados: {data.released} | Não Liberados: {data.notReleased}</p>
-            </div>
-          ))}
-        </div>
+      
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">Resumo</h3>
+        <p>Total de veículos filtrados: {stats.total}</p>
+        <p>Veículos liberados: {stats.released}</p>
+        <p>Veículos não liberados: {stats.notReleased}</p>
       </div>
     </div>
   );
