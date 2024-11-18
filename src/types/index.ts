@@ -12,6 +12,8 @@ export type Vehicle = {
   releaseDate: string | null;
   city: City;
   createdAt: string;
+  bouTrv: string;
+  hasNoPlate: boolean;
 };
 
 export type VehicleType =
