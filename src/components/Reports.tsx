@@ -119,14 +119,6 @@ export default function Reports() {
 
     let yPos = 50;
 
-    // Add a helper to check if a page break is needed
-    const checkPageBreak = (additionalHeight) => {
-      if (yPos + additionalHeight > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        yPos = 20; // Reset y position
-      }
-    };
-
     // Add total statistics
     doc.text('Resumo Geral:', 14, yPos);
     yPos += 7;
@@ -141,7 +133,6 @@ export default function Reports() {
     doc.text('Por Cidade:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byCity).forEach(([city, data]) => {
-      checkPageBreak(14);
       doc.text(`${city}:`, 20, yPos);
       yPos += 7;
       doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
@@ -153,7 +144,6 @@ export default function Reports() {
     doc.text('Por Tipo de Veículo:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byType).forEach(([type, data]) => {
-      checkPageBreak(14);
       doc.text(`${type}:`, 20, yPos);
       yPos += 7;
       doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
@@ -173,7 +163,6 @@ export default function Reports() {
     doc.text('Por Estado:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byState).forEach(([state, count]) => {
-      checkPageBreak(14);
       doc.text(`${state}: ${count}`, 20, yPos);
       yPos += 7;
     });
@@ -241,18 +230,73 @@ export default function Reports() {
 
         <button
           onClick={() => exportToPDF(filteredVehicles)}
-          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center justify-center"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Baixar Relatório PDF
+          <Download className="h-5 w-5 mr-2" />
+          Exportar Relatório Detalhado (PDF)
         </button>
       </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">Resumo</h3>
-        <p>Total de veículos filtrados: {stats.total}</p>
-        <p>Veículos liberados: {stats.released}</p>
-        <p>Veículos não liberados: {stats.notReleased}</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Resumo Geral</h3>
+          <div className="space-y-2">
+            <p>Total: <span className="font-bold text-indigo-600">{stats.total}</span></p>
+            <p>Liberados: <span className="font-bold text-green-600">{stats.released}</span></p>
+            <p>Não Liberados: <span className="font-bold text-red-600">{stats.notReleased}</span></p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Por Cidade</h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {Object.entries(stats.byCity).map(([city, data]) => (
+              <div key={city} className="border-b pb-2">
+                <p className="font-medium">{city}</p>
+                <div className="pl-4 text-sm">
+                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
+                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
+                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Por Tipo de Veículo</h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {Object.entries(stats.byType).map(([type, data]) => (
+              <div key={type} className="border-b pb-2">
+                <p className="font-medium">{type}</p>
+                <div className="pl-4 text-sm">
+                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
+                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
+                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Status das Chaves</h3>
+          <div className="space-y-2">
+            <p>Com Chave: <span className="font-bold text-green-600">{stats.byKey.yes}</span></p>
+            <p>Sem Chave: <span className="font-bold text-red-600">{stats.byKey.no}</span></p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Por Estado</h3>
+          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+            {Object.entries(stats.byState).map(([state, count]) => (
+              <p key={state}>
+                {state}: <span className="font-bold text-indigo-600">{count}</span>
+              </p>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
