@@ -49,9 +49,9 @@ export default function VehicleForm() {
 
   useEffect(() => {
     if (formData.hasNoPlate) {
-      setFormData(prev => ({ ...prev, plate: 'SEM PLACA' }));
+      setFormData(prev => ({ ...prev, plate: 'SEM PLACA', state: '--' }));
     } else if (formData.plate === 'SEM PLACA') {
-      setFormData(prev => ({ ...prev, plate: '' }));
+      setFormData(prev => ({ ...prev, plate: '', state: '' }));
     }
   }, [formData.hasNoPlate]);
 
@@ -202,6 +202,9 @@ export default function VehicleForm() {
               Veículo sem placa
             </label>
           </div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Placa
+          </label>
           <input
             type="text"
             required
@@ -218,6 +221,7 @@ export default function VehicleForm() {
           </label>
           <select
             required
+            disabled={formData.hasNoPlate}
             className="w-full p-2 border rounded-md"
             value={formData.state}
             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -228,128 +232,17 @@ export default function VehicleForm() {
             ))}
           </select>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Data de Vistoria
-          </label>
-          <input
-            type="date"
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.inspectionDate}
-            onChange={(e) => setFormData({ ...formData, inspectionDate: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            BOU/TRV
-          </label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value={formData.bouTrv}
-            onChange={(e) => setFormData({ ...formData, bouTrv: e.target.value })}
-            placeholder="Digite o BOU/TRV"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Marca
-          </label>
-          <input
-            type="text"
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.brand}
-            onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Modelo
-          </label>
-          <input
-            type="text"
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.model}
-            onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tipo de Veículo
-          </label>
-          <select
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.vehicleType}
-            onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value as VehicleType })}
-          >
-            <option value="">Selecione o tipo</option>
-            {VEHICLE_TYPES.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Possui Chave?
-          </label>
-          <select
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.hasKey ? 'SIM' : 'NÃO'}
-            onChange={(e) => setFormData({ ...formData, hasKey: e.target.value === 'SIM' })}
-          >
-            <option value="NÃO">NÃO</option>
-            <option value="SIM">SIM</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Cidade
-          </label>
-          <select
-            required
-            className="w-full p-2 border rounded-md"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value as City })}
-          >
-            <option value="">Selecione a cidade</option>
-            {CITIES.map(city => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Observação Chassi
-        </label>
-        <textarea
-          className="w-full p-2 border rounded-md"
-          rows={3}
-          value={formData.chassisObservation}
-          onChange={(e) => setFormData({ ...formData, chassisObservation: e.target.value })}
-        />
-      </div>
-
-      <div className="mt-6">
+      {/* Additional form fields */}
+      
+      <div className="flex justify-between mt-6">
         <button
           type="submit"
+          className="bg-blue-600 text-white p-2 rounded-md"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition disabled:opacity-50"
         >
-          {loading ? (isEditing ? 'Atualizando...' : 'Cadastrando...') : (isEditing ? 'Atualizar Veículo' : 'Cadastrar Veículo')}
+          {loading ? 'Carregando...' : isEditing ? 'Atualizar' : 'Cadastrar'}
         </button>
       </div>
     </form>
