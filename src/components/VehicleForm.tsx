@@ -167,7 +167,7 @@ export default function VehicleForm() {
             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
           />
           <label htmlFor="useExternalRegistration" className="ml-2 block text-sm text-gray-900">
-            Usar número de registro externo
+            Usar número de registro Detran manual
           </label>
         </div>
 
@@ -182,7 +182,7 @@ export default function VehicleForm() {
               className="w-full p-2 border rounded-md"
               value={externalRegistrationNumber}
               onChange={(e) => setExternalRegistrationNumber(e.target.value)}
-              placeholder="Digite o número de registro"
+              placeholder="Digite o número de registro Detran"
             />
           </div>
         )}
