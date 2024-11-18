@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Vehicle, City, VehicleType } from '../types';
-import { FileText, Download } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
@@ -52,7 +52,6 @@ export default function Reports() {
         released: number,
         notReleased: number
       }>,
-
       byKey: { yes: 0, no: 0 },
       byState: {} as Record<string, number>,
       byCity: {} as Record<City, {
@@ -105,73 +104,57 @@ export default function Reports() {
     const doc = new jsPDF();
     const stats = generateStats(filteredVehicles);
 
+    const addTextWithCheck = (text: string, x: number, y: number) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(text, x, y);
+      return y + 7; // Increment Y position for the next line
+    };
+
     doc.setFontSize(16);
     doc.text('Relatório de Veículos', 14, 20);
 
     doc.setFontSize(12);
-    doc.text(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`, 14, 30);
-    doc.text(`Cidade: ${selectedCity || 'Todas'}`, 14, 37);
-
-    let yPos = 50;
+    let yPos = 30;
+    yPos = addTextWithCheck(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`, 14, yPos);
+    yPos = addTextWithCheck(`Cidade: ${selectedCity || 'Todas'}`, 14, yPos);
+    yPos += 10;
 
     // Add total statistics
-    doc.text('Resumo Geral:', 14, yPos);
-    yPos += 7;
-    doc.text(`Total de Veículos: ${stats.total}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Veículos Liberados: ${stats.released}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Veículos Não Liberados: ${stats.notReleased}`, 20, yPos);
-    yPos += 14;
+    yPos = addTextWithCheck('Resumo Geral:', 14, yPos);
+    yPos = addTextWithCheck(`Total de Veículos: ${stats.total}`, 20, yPos);
+    yPos = addTextWithCheck(`Veículos Liberados: ${stats.released}`, 20, yPos);
+    yPos = addTextWithCheck(`Veículos Não Liberados: ${stats.notReleased}`, 20, yPos);
+    yPos += 10;
 
     // Add city statistics
-    doc.text('Por Cidade:', 14, yPos);
-    yPos += 7;
+    yPos = addTextWithCheck('Por Cidade:', 14, yPos);
     Object.entries(stats.byCity).forEach(([city, data]) => {
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20; // Reset yPos for the new page
-      }
-      doc.text(`${city}:`, 20, yPos);
-      yPos += 7;
-      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
-      yPos += 7;
+      yPos = addTextWithCheck(`${city}:`, 20, yPos);
+      yPos = addTextWithCheck(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
     });
-    yPos += 7;
+    yPos += 10;
 
     // Add vehicle type statistics
-    doc.text('Por Tipo de Veículo:', 14, yPos);
-    yPos += 7;
+    yPos = addTextWithCheck('Por Tipo de Veículo:', 14, yPos);
     Object.entries(stats.byType).forEach(([type, data]) => {
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20; // Reset yPos for the new page
-      }
-      doc.text(`${type}:`, 20, yPos);
-      yPos += 7;
-      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
-      yPos += 7;
+      yPos = addTextWithCheck(`${type}:`, 20, yPos);
+      yPos = addTextWithCheck(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
     });
-    yPos += 7;
+    yPos += 10;
 
     // Add key statistics
-    doc.text('Status das Chaves:', 14, yPos);
-    yPos += 7;
-    doc.text(`Com Chave: ${stats.byKey.yes}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
-    yPos += 14;
+    yPos = addTextWithCheck('Status das Chaves:', 14, yPos);
+    yPos = addTextWithCheck(`Com Chave: ${stats.byKey.yes}`, 20, yPos);
+    yPos = addTextWithCheck(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
+    yPos += 10;
 
     // Add state statistics with multiple pages if needed
-    doc.text('Por Estado:', 14, yPos);
-    yPos += 7;
+    yPos = addTextWithCheck('Por Estado:', 14, yPos);
     Object.entries(stats.byState).forEach(([state, count]) => {
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20; // Reset yPos for the new page
-      }
-      doc.text(`${state}: ${count}`, 20, yPos);
-      yPos += 7;
+      yPos = addTextWithCheck(`${state}: ${count}`, 20, yPos);
     });
 
     doc.save('relatorio-detalhado-veiculos.pdf');
