@@ -52,6 +52,7 @@ export default function Reports() {
         released: number,
         notReleased: number
       }>,
+
       byKey: { yes: 0, no: 0 },
       byState: {} as Record<string, number>,
       byCity: {} as Record<City, {
@@ -62,7 +63,6 @@ export default function Reports() {
     };
 
     filteredVehicles.forEach(vehicle => {
-      // Initialize type stats if not exists
       if (!stats.byType[vehicle.vehicleType]) {
         stats.byType[vehicle.vehicleType] = {
           total: 0,
@@ -70,22 +70,18 @@ export default function Reports() {
           notReleased: 0
         };
       }
-      
-      // Count by type
+
       stats.byType[vehicle.vehicleType].total++;
       if (vehicle.releaseDate) {
         stats.byType[vehicle.vehicleType].released++;
       } else {
         stats.byType[vehicle.vehicleType].notReleased++;
       }
-      
-      // Count by key
+
       vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
-      
-      // Count by state
+
       stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
-      
-      // Initialize city stats if not exists
+
       if (!stats.byCity[vehicle.city]) {
         stats.byCity[vehicle.city] = {
           total: 0,
@@ -93,8 +89,7 @@ export default function Reports() {
           notReleased: 0
         };
       }
-      
-      // Count by city
+
       stats.byCity[vehicle.city].total++;
       if (vehicle.releaseDate) {
         stats.byCity[vehicle.city].released++;
@@ -133,6 +128,10 @@ export default function Reports() {
     doc.text('Por Cidade:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byCity).forEach(([city, data]) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20; // Reset yPos for the new page
+      }
       doc.text(`${city}:`, 20, yPos);
       yPos += 7;
       doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
@@ -144,6 +143,10 @@ export default function Reports() {
     doc.text('Por Tipo de Veículo:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byType).forEach(([type, data]) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20; // Reset yPos for the new page
+      }
       doc.text(`${type}:`, 20, yPos);
       yPos += 7;
       doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
@@ -159,10 +162,14 @@ export default function Reports() {
     doc.text(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
     yPos += 14;
 
-    // Add state statistics
+    // Add state statistics with multiple pages if needed
     doc.text('Por Estado:', 14, yPos);
     yPos += 7;
     Object.entries(stats.byState).forEach(([state, count]) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20; // Reset yPos for the new page
+      }
       doc.text(`${state}: ${count}`, 20, yPos);
       yPos += 7;
     });
@@ -230,72 +237,34 @@ export default function Reports() {
 
         <button
           onClick={() => exportToPDF(filteredVehicles)}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center justify-center"
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md mt-4 hover:bg-indigo-700 flex items-center justify-center"
         >
-          <Download className="h-5 w-5 mr-2" />
-          Exportar Relatório Detalhado (PDF)
+          <FileText className="mr-2" /> Gerar Relatório PDF
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Resumo Geral</h3>
-          <div className="space-y-2">
-            <p>Total: <span className="font-bold text-indigo-600">{stats.total}</span></p>
-            <p>Liberados: <span className="font-bold text-green-600">{stats.released}</span></p>
-            <p>Não Liberados: <span className="font-bold text-red-600">{stats.notReleased}</span></p>
-          </div>
+          <h3 className="text-xl font-semibold mb-2 text-gray-700">Resumo Geral</h3>
+          <p>Total de Veículos: {stats.total}</p>
+          <p>Veículos Liberados: {stats.released}</p>
+          <p>Veículos Não Liberados: {stats.notReleased}</p>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Cidade</h3>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {Object.entries(stats.byCity).map(([city, data]) => (
-              <div key={city} className="border-b pb-2">
-                <p className="font-medium">{city}</p>
-                <div className="pl-4 text-sm">
-                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
-                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
-                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-xl font-semibold mb-2 text-gray-700">Status das Chaves</h3>
+          <p>Com Chave: {stats.byKey.yes}</p>
+          <p>Sem Chave: {stats.byKey.no}</p>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Tipo de Veículo</h3>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {Object.entries(stats.byType).map(([type, data]) => (
-              <div key={type} className="border-b pb-2">
-                <p className="font-medium">{type}</p>
-                <div className="pl-4 text-sm">
-                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
-                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
-                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Status das Chaves</h3>
-          <div className="space-y-2">
-            <p>Com Chave: <span className="font-bold text-green-600">{stats.byKey.yes}</span></p>
-            <p>Sem Chave: <span className="font-bold text-red-600">{stats.byKey.no}</span></p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Estado</h3>
-          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-            {Object.entries(stats.byState).map(([state, count]) => (
-              <p key={state}>
-                {state}: <span className="font-bold text-indigo-600">{count}</span>
-              </p>
-            ))}
-          </div>
+          <h3 className="text-xl font-semibold mb-2 text-gray-700">Por Tipo de Veículo</h3>
+          {Object.entries(stats.byType).map(([type, data]) => (
+            <div key={type} className="mb-2">
+              <p>{type}: {data.total} total</p>
+              <p>Liberados: {data.released} | Não Liberados: {data.notReleased}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
