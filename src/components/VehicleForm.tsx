@@ -32,7 +32,9 @@ export default function VehicleForm() {
     vehicleType: '' as VehicleType,
     hasKey: false,
     chassisObservation: '',
-    city: '' as City
+    city: '' as City,
+    bouTrv: '',
+    hasNoPlate: false
   });
 
   const navigate = useNavigate();
@@ -44,6 +46,14 @@ export default function VehicleForm() {
       fetchVehicle();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (formData.hasNoPlate) {
+      setFormData(prev => ({ ...prev, plate: 'SEM PLACA' }));
+    } else if (formData.plate === 'SEM PLACA') {
+      setFormData(prev => ({ ...prev, plate: '' }));
+    }
+  }, [formData.hasNoPlate]);
 
   const fetchVehicle = async () => {
     try {
@@ -59,10 +69,10 @@ export default function VehicleForm() {
           vehicleType: vehicleData.vehicleType,
           hasKey: vehicleData.hasKey,
           chassisObservation: vehicleData.chassisObservation,
-          city: vehicleData.city
+          city: vehicleData.city,
+          bouTrv: vehicleData.bouTrv || '',
+          hasNoPlate: vehicleData.hasNoPlate || false
         });
-        // If registration number is different from auto-generated sequence,
-        // assume it was manually entered
         const lastAutoNumber = await getLastAutoRegistrationNumber();
         if (vehicleData.registrationNumber < lastAutoNumber - 100) {
           setUseExternalRegistration(true);
@@ -180,13 +190,23 @@ export default function VehicleForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Placa
-          </label>
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="hasNoPlate"
+              checked={formData.hasNoPlate}
+              onChange={(e) => setFormData({ ...formData, hasNoPlate: e.target.checked })}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+            <label htmlFor="hasNoPlate" className="ml-2 block text-sm text-gray-900">
+              Veículo sem placa
+            </label>
+          </div>
           <input
             type="text"
             required
-            className="w-full p-2 border rounded-md"
+            disabled={formData.hasNoPlate}
+            className="w-full p-2 border rounded-md disabled:bg-gray-100"
             value={formData.plate}
             onChange={(e) => setFormData({ ...formData, plate: e.target.value.toUpperCase() })}
           />
@@ -219,6 +239,19 @@ export default function VehicleForm() {
             className="w-full p-2 border rounded-md"
             value={formData.inspectionDate}
             onChange={(e) => setFormData({ ...formData, inspectionDate: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            BOU/TRV
+          </label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded-md"
+            value={formData.bouTrv}
+            onChange={(e) => setFormData({ ...formData, bouTrv: e.target.value })}
+            placeholder="Digite o BOU/TRV"
           />
         </div>
 
