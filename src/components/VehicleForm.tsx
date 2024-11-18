@@ -209,6 +209,7 @@ export default function VehicleForm() {
             className="w-full p-2 border rounded-md disabled:bg-gray-100"
             value={formData.plate}
             onChange={(e) => setFormData({ ...formData, plate: e.target.value.toUpperCase() })}
+            placeholder="Digite a Placa"
           />
         </div>
 
