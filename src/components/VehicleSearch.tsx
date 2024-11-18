@@ -34,17 +34,18 @@ export default function VehicleSearch() {
     startReleaseDate: '',
     endReleaseDate: '',
     hasKey: '',
-    isReleased: ''
+    isReleased: '',
+    bouTrv: '',
+    hasNoPlate: false
   });
   const [results, setResults] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<string | null>(null);
   const [editDate, setEditDate] = useState<string>('');
 
-  // Função para normalizar a data (evitar problema de fuso horário)
   const normalizeDate = (date: string) => {
     const normalizedDate = new Date(date);
-    normalizedDate.setUTCHours(0, 0, 0, 0); // Garante que a hora seja 00:00 UTC
+    normalizedDate.setUTCHours(0, 0, 0, 0);
     return normalizedDate;
   };
 
@@ -85,6 +86,12 @@ export default function VehicleSearch() {
       } else if (searchParams.isReleased === 'false') {
         constraints.push(where('releaseDate', '==', null));
       }
+      if (searchParams.bouTrv) {
+        constraints.push(where('bouTrv', '==', searchParams.bouTrv));
+      }
+      if (searchParams.hasNoPlate) {
+        constraints.push(where('plate', '==', 'SEM PLACA'));
+      }
 
       const q = constraints.length > 0 ? query(baseQuery, ...constraints) : baseQuery;
       const querySnapshot = await getDocs(q);
@@ -94,7 +101,6 @@ export default function VehicleSearch() {
         ...doc.data()
       })) as Vehicle[];
 
-      // Filter by date ranges after fetching
       if (searchParams.startInspectionDate || searchParams.endInspectionDate) {
         vehicles = vehicles.filter(vehicle => {
           const inspectionDate = new Date(vehicle.inspectionDate);
@@ -139,10 +145,10 @@ export default function VehicleSearch() {
     try {
       const docRef = doc(db, 'vehicles', vehicleId);
       await updateDoc(docRef, {
-        releaseDate: normalizeDate(date).toISOString() // Ajuste correto da data
+        releaseDate: normalizeDate(date).toISOString()
       });
       toast.success('Data de liberação atualizada com sucesso');
-      handleSearch(new Event('submit')); // Atualizar a lista após a edição
+      handleSearch(new Event('submit'));
     } catch (error) {
       console.error('Error updating release date:', error);
       toast.error('Erro ao atualizar data de liberação');
@@ -169,14 +175,47 @@ export default function VehicleSearch() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Placa
+              BOU/TRV
             </label>
             <input
               type="text"
               className="w-full p-2 border rounded-md"
-              value={searchParams.plate}
-              onChange={(e) => setSearchParams({...searchParams, plate: e.target.value.toUpperCase()})}
+              value={searchParams.bouTrv}
+              onChange={(e) => setSearchParams({...searchParams, bouTrv: e.target.value})}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Placa
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                value={searchParams.plate}
+                onChange={(e) => setSearchParams({...searchParams, plate: e.target.value.toUpperCase()})}
+                disabled={searchParams.hasNoPlate}
+              />
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="searchHasNoPlate"
+                  checked={searchParams.hasNoPlate}
+                  onChange={(e) => {
+                    setSearchParams({
+                      ...searchParams,
+                      hasNoPlate: e.target.checked,
+                      plate: e.target.checked ? 'SEM PLACA' : ''
+                    });
+                  }}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="searchHasNoPlate" className="ml-2 text-sm text-gray-600">
+                  Sem Placa
+                </label>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -295,6 +334,7 @@ export default function VehicleSearch() {
           <thead className="border-b bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Placa</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">BOU/TRV</th>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Marca</th>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Modelo</th>
               <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Data Liberação</th>
@@ -305,6 +345,7 @@ export default function VehicleSearch() {
             {results.map(vehicle => (
               <tr key={vehicle.id} className="border-b hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.plate}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.bouTrv}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.brand}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.model}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -318,8 +359,8 @@ export default function VehicleSearch() {
                       />
                       <button
                         onClick={async () => {
-                          await handleUpdateReleaseDate(vehicle.id, editDate);
-                          setEditingVehicle(null); // Sair do modo de edição
+                          await handleUpdateReleaseDate(vehicle.id!, editDate);
+                          setEditingVehicle(null);
                         }}
                         className="text-indigo-600 hover:text-indigo-900"
                       >
