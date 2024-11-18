@@ -287,16 +287,18 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Estado</h3>
-          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-            {Object.entries(stats.byState).map(([state, count]) => (
-              <p key={state}>
-                {state}: <span className="font-bold text-indigo-600">{count}</span>
-              </p>
-            ))}
-          </div>
-        </div>
+       <div className="bg-white p-6 rounded-lg shadow-md">
+  <h3 className="text-lg font-semibold mb-4">Por Estado</h3>
+  <div className="max-h-40 overflow-y-auto">
+    {Object.entries(stats.byState).map(([state, count], index, array) => (
+      <span key={state} className="mr-2">
+        {state}: <span className="font-bold text-indigo-600">{count}</span>
+        {index < array.length - 1 && ' | '}
+      </span>
+    ))}
+  </div>
+</div>
+
       </div>
     </div>
   );
