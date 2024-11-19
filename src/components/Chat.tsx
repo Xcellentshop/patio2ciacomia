@@ -71,14 +71,20 @@ export default function Chat() {
     }
   };
 
-  const callGroqAPI = async (message: string) => {
+  const callGroqAPI = async (message: string, stats: any) => {
     const response = await fetch('https://api.groq.ai/v1/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({
+        message,
+        context: {
+          role: 'policial administrativo',
+          stats
+        }
+      })
     });
 
     if (!response.ok) {
@@ -93,7 +99,7 @@ export default function Chat() {
     const stats = await getVehicleStats();
     if (!stats) return 'Desculpe, não consegui acessar as informações no momento.';
 
-    const groqResponse = await callGroqAPI(message);
+    const groqResponse = await callGroqAPI(message, stats);
     return groqResponse;
   };
 
