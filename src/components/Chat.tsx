@@ -17,12 +17,17 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    setApiKey('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');
+  }, []);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -66,35 +71,30 @@ export default function Chat() {
     }
   };
 
+  const callGroqAPI = async (message: string) => {
+    const response = await fetch('https://api.groq.ai/v1/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ message })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch response from GROQ API');
+    }
+
+    const data = await response.json();
+    return data.response;
+  };
+
   const processUserMessage = async (message: string) => {
     const stats = await getVehicleStats();
     if (!stats) return 'Desculpe, não consegui acessar as informações no momento.';
 
-    const lowerMessage = message.toLowerCase();
-
-    if (lowerMessage.includes('total') || lowerMessage.includes('quantidade')) {
-      return `Atualmente temos um total de ${stats.total} veículos cadastrados no sistema.`;
-    }
-
-    if (lowerMessage.includes('liberados')) {
-      return `Dos ${stats.total} veículos cadastrados, ${stats.released} já foram liberados e ${stats.notReleased} ainda aguardam liberação.`;
-    }
-
-    if (lowerMessage.includes('cidade') || lowerMessage.includes('cidades')) {
-      const cityStats = Object.entries(stats.byCity)
-        .map(([city, count]) => `${city}: ${count} veículos`)
-        .join('\n');
-      return `Distribuição por cidade:\n${cityStats}`;
-    }
-
-    if (lowerMessage.includes('tipo') || lowerMessage.includes('tipos')) {
-      const typeStats = Object.entries(stats.byType)
-        .map(([type, count]) => `${type}: ${count} veículos`)
-        .join('\n');
-      return `Distribuição por tipo de veículo:\n${typeStats}`;
-    }
-
-    return 'Posso fornecer informações sobre o total de veículos, quantidade de liberados/não liberados, distribuição por cidade ou por tipo de veículo. Como posso ajudar?';
+    const groqResponse = await callGroqAPI(message);
+    return groqResponse;
   };
 
   const handleSendMessage = async () => {
