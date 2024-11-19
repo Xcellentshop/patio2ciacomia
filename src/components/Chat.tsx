@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { CSSTransition } from 'react-transition-group';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { format } from 'date-fns';
 
@@ -10,6 +10,22 @@ interface Message {
   text: string;
   sender: 'user' | 'agent';
   timestamp: Date;
+}
+
+interface Vehicle {
+  id: string;
+  brand: string;
+  chassisObservation: string;
+  city: string;
+  createdAt: string;
+  hasKey: boolean;
+  inspectionDate: string;
+  model: string;
+  plate: string;
+  registrationNumber: number;
+  releaseDate: string;
+  state: string;
+  vehicleType: string;
 }
 
 export default function Chat() {
@@ -44,34 +60,20 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const getVehicleStats = async () => {
+  const getVehicleData = async () => {
     try {
       const vehiclesRef = collection(db, 'vehicles');
-      const q = query(vehiclesRef, orderBy('createdAt', 'desc'), limit(100));
+      const q = query(vehiclesRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const vehicles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      const stats = {
-        total: vehicles.length,
-        released: vehicles.filter(v => v.releaseDate).length,
-        notReleased: vehicles.filter(v => !v.releaseDate).length,
-        byCity: {} as Record<string, number>,
-        byType: {} as Record<string, number>
-      };
-
-      vehicles.forEach(vehicle => {
-        stats.byCity[vehicle.city] = (stats.byCity[vehicle.city] || 0) + 1;
-        stats.byType[vehicle.vehicleType] = (stats.byType[vehicle.vehicleType] || 0) + 1;
-      });
-
-      return stats;
+      const vehicles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Vehicle[];
+      return vehicles;
     } catch (error) {
-      console.error('Error fetching vehicle stats:', error);
+      console.error('Error fetching vehicle data:', error);
       return null;
     }
   };
 
-  const callGroqAPI = async (message: string, stats: any) => {
+  const callGroqAPI = async (message: string, vehicles: Vehicle[]) => {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -90,11 +92,7 @@ export default function Chat() {
             content: `Responda à seguinte pergunta com base nas informações fornecidas:
               Pergunta: ${message}
               Informações:
-              Total de veículos: ${stats.total}
-              Veículos liberados: ${stats.released}
-              Veículos não liberados: ${stats.notReleased}
-              Distribuição por cidade: ${JSON.stringify(stats.byCity)}
-              Distribuição por tipo de veículo: ${JSON.stringify(stats.byType)}
+              ${JSON.stringify(vehicles)}
               Responda de forma natural e amigável.`,
           },
         ],
@@ -112,10 +110,10 @@ export default function Chat() {
   };
 
   const processUserMessage = async (message: string) => {
-    const stats = await getVehicleStats();
-    if (!stats) return 'Desculpe, não consegui acessar as informações no momento.';
+    const vehicles = await getVehicleData();
+    if (!vehicles) return 'Desculpe, não consegui acessar as informações no momento.';
 
-    const groqResponse = await callGroqAPI(message, stats);
+    const groqResponse = await callGroqAPI(message, vehicles);
     return groqResponse;
   };
 
