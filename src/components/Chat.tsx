@@ -72,19 +72,35 @@ export default function Chat() {
   };
 
   const callGroqAPI = async (message: string, stats: any) => {
-    const response = await fetch('https://api.groq.ai/v1/chat', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        message,
-        context: {
-          role: 'policial administrativo',
-          stats
-        }
-      })
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content: 'Você é um policial administrativo da 2ª Cia de Medianeira, especializado em fornecer informações sobre veículos cadastrados no sistema.',
+          },
+          {
+            role: 'user',
+            content: `Responda à seguinte pergunta com base nas informações fornecidas:
+              Pergunta: ${message}
+              Informações:
+              Total de veículos: ${stats.total}
+              Veículos liberados: ${stats.released}
+              Veículos não liberados: ${stats.notReleased}
+              Distribuição por cidade: ${JSON.stringify(stats.byCity)}
+              Distribuição por tipo de veículo: ${JSON.stringify(stats.byType)}
+              Responda de forma natural e amigável.`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
     });
 
     if (!response.ok) {
@@ -92,7 +108,7 @@ export default function Chat() {
     }
 
     const data = await response.json();
-    return data.response;
+    return data.choices[0].message.content;
   };
 
   const processUserMessage = async (message: string) => {
