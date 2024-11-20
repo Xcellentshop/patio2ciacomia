@@ -49,7 +49,7 @@ export default function Chat() {
     if (isOpen && messages.length === 0) {
       setMessages([{
         id: 'welcome',
-        text: 'Olá, sou Stive, policial do administrativo da 2ª Cia de Medianeira. Estou aqui para auxiliar você com informações. Como posso ajudar?',
+        text: 'Olá, sou Sd Edson Moraes, policial do administrativo da 2ª Cia de Medianeira. Estou aqui para auxiliar você com informações. Como posso ajudar?',
         sender: 'agent',
         timestamp: new Date()
       }]);
