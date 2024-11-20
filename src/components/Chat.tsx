@@ -49,7 +49,7 @@ export default function Chat() {
     if (isOpen && messages.length === 0) {
       setMessages([{
         id: 'welcome',
-        text: 'Olá, sou Sd Edson Moraes, policial do administrativo da 2ª Cia de Medianeira. Estou aqui para auxiliar você com informações. Como posso ajudar?',
+        text: 'Hop! Sou Sd Edson Moraes, policial do administrativo da 2ª Cia de Medianeira. Estou aqui para auxiliar você com informações. Como posso ajudar?',
         sender: 'agent',
         timestamp: new Date()
       }]);
@@ -85,7 +85,7 @@ export default function Chat() {
         messages: [
           {
             role: 'system',
-            content: 'Você é um policial administrativo da 2ª Cia de Medianeira, especializado em fornecer informações sobre veículos cadastrados no sistema.',
+            content: 'Você é um policial administrativo da 2ª Cia de Medianeira que se chama Sd Edson Moraes, especializado em fornecer informações sobre veículos cadastrados no sistema.',
           },
           {
             role: 'user',
