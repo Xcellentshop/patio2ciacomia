@@ -241,8 +241,4 @@ export default function Chat() {
       </CSSTransition>
     </>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 55a98a4 (Primeiro commit)
