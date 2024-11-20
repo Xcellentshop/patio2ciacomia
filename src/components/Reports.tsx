@@ -62,10 +62,6 @@ export default function Reports() {
     };
 
     filteredVehicles.forEach(vehicle => {
-<<<<<<< HEAD
-      // Initialize type stats if not exists
-=======
->>>>>>> 55a98a4 (Primeiro commit)
       if (!stats.byType[vehicle.vehicleType]) {
         stats.byType[vehicle.vehicleType] = {
           total: 0,
@@ -74,10 +70,6 @@ export default function Reports() {
         };
       }
       
-<<<<<<< HEAD
-      // Count by type
-=======
->>>>>>> 55a98a4 (Primeiro commit)
       stats.byType[vehicle.vehicleType].total++;
       if (vehicle.releaseDate) {
         stats.byType[vehicle.vehicleType].released++;
@@ -85,20 +77,10 @@ export default function Reports() {
         stats.byType[vehicle.vehicleType].notReleased++;
       }
       
-<<<<<<< HEAD
-      // Count by key
-      vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
-      
-      // Count by state
-      stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
-      
-      // Initialize city stats if not exists
-=======
       vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
       
       stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
       
->>>>>>> 55a98a4 (Primeiro commit)
       if (!stats.byCity[vehicle.city]) {
         stats.byCity[vehicle.city] = {
           total: 0,
@@ -107,10 +89,6 @@ export default function Reports() {
         };
       }
       
-<<<<<<< HEAD
-      // Count by city
-=======
->>>>>>> 55a98a4 (Primeiro commit)
       stats.byCity[vehicle.city].total++;
       if (vehicle.releaseDate) {
         stats.byCity[vehicle.city].released++;
@@ -125,64 +103,6 @@ export default function Reports() {
   const exportToPDF = (filteredVehicles: Vehicle[]) => {
     const doc = new jsPDF();
     const stats = generateStats(filteredVehicles);
-<<<<<<< HEAD
-
-    doc.setFontSize(16);
-    doc.text('Relatório de Veículos', 14, 20);
-
-    doc.setFontSize(12);
-    doc.text(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`, 14, 30);
-    doc.text(`Cidade: ${selectedCity || 'Todas'}`, 14, 37);
-
-    let yPos = 50;
-
-    // Add total statistics
-    doc.text('Resumo Geral:', 14, yPos);
-    yPos += 7;
-    doc.text(`Total de Veículos: ${stats.total}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Veículos Liberados: ${stats.released}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Veículos Não Liberados: ${stats.notReleased}`, 20, yPos);
-    yPos += 14;
-
-    // Add city statistics
-    doc.text('Por Cidade:', 14, yPos);
-    yPos += 7;
-    Object.entries(stats.byCity).forEach(([city, data]) => {
-      doc.text(`${city}:`, 20, yPos);
-      yPos += 7;
-      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
-      yPos += 7;
-    });
-    yPos += 7;
-
-    // Add vehicle type statistics
-    doc.text('Por Tipo de Veículo:', 14, yPos);
-    yPos += 7;
-    Object.entries(stats.byType).forEach(([type, data]) => {
-      doc.text(`${type}:`, 20, yPos);
-      yPos += 7;
-      doc.text(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 25, yPos);
-      yPos += 7;
-    });
-    yPos += 7;
-
-    // Add key statistics
-    doc.text('Status das Chaves:', 14, yPos);
-    yPos += 7;
-    doc.text(`Com Chave: ${stats.byKey.yes}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Sem Chave: ${stats.byKey.no}`, 20, yPos);
-    yPos += 14;
-
-    // Add state statistics
-    doc.text('Por Estado:', 14, yPos);
-    yPos += 7;
-    Object.entries(stats.byState).forEach(([state, count]) => {
-      doc.text(`${state}: ${count}`, 20, yPos);
-      yPos += 7;
-=======
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 14;
@@ -278,7 +198,6 @@ export default function Reports() {
       margin: { top: 10 },
       styles: { fontSize: 8 },
       headStyles: { fillColor: [66, 66, 166] }
->>>>>>> 55a98a4 (Primeiro commit)
     });
 
     doc.save('relatorio-detalhado-veiculos.pdf');
@@ -414,8 +333,4 @@ export default function Reports() {
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 55a98a4 (Primeiro commit)
