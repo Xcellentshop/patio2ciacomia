@@ -186,8 +186,4 @@ export default function VehicleList() {
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 55a98a4 (Primeiro commit)
