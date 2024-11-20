@@ -19,4 +19,8 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["vite.config.ts"]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 55a98a4 (Primeiro commit)

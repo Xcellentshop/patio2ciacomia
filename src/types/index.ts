@@ -43,4 +43,8 @@ export type FilterOptions = {
   vehicleType?: VehicleType;
   state?: string;
   hasKey?: boolean;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 55a98a4 (Primeiro commit)

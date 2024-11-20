@@ -21,4 +21,8 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 55a98a4 (Primeiro commit)

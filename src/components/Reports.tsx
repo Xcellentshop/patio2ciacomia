@@ -62,7 +62,10 @@ export default function Reports() {
     };
 
     filteredVehicles.forEach(vehicle => {
+<<<<<<< HEAD
       // Initialize type stats if not exists
+=======
+>>>>>>> 55a98a4 (Primeiro commit)
       if (!stats.byType[vehicle.vehicleType]) {
         stats.byType[vehicle.vehicleType] = {
           total: 0,
@@ -71,7 +74,10 @@ export default function Reports() {
         };
       }
       
+<<<<<<< HEAD
       // Count by type
+=======
+>>>>>>> 55a98a4 (Primeiro commit)
       stats.byType[vehicle.vehicleType].total++;
       if (vehicle.releaseDate) {
         stats.byType[vehicle.vehicleType].released++;
@@ -79,6 +85,7 @@ export default function Reports() {
         stats.byType[vehicle.vehicleType].notReleased++;
       }
       
+<<<<<<< HEAD
       // Count by key
       vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
       
@@ -86,6 +93,12 @@ export default function Reports() {
       stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
       
       // Initialize city stats if not exists
+=======
+      vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
+      
+      stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
+      
+>>>>>>> 55a98a4 (Primeiro commit)
       if (!stats.byCity[vehicle.city]) {
         stats.byCity[vehicle.city] = {
           total: 0,
@@ -94,7 +107,10 @@ export default function Reports() {
         };
       }
       
+<<<<<<< HEAD
       // Count by city
+=======
+>>>>>>> 55a98a4 (Primeiro commit)
       stats.byCity[vehicle.city].total++;
       if (vehicle.releaseDate) {
         stats.byCity[vehicle.city].released++;
@@ -109,6 +125,7 @@ export default function Reports() {
   const exportToPDF = (filteredVehicles: Vehicle[]) => {
     const doc = new jsPDF();
     const stats = generateStats(filteredVehicles);
+<<<<<<< HEAD
 
     doc.setFontSize(16);
     doc.text('Relatório de Veículos', 14, 20);
@@ -165,6 +182,103 @@ export default function Reports() {
     Object.entries(stats.byState).forEach(([state, count]) => {
       doc.text(`${state}: ${count}`, 20, yPos);
       yPos += 7;
+=======
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    let yPos = margin;
+    const lineHeight = 7;
+
+    const addNewPageIfNeeded = (requiredSpace: number) => {
+      if (yPos + requiredSpace > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin;
+        return true;
+      }
+      return false;
+    };
+
+    const writeText = (text: string, indent: number = 0) => {
+      if (addNewPageIfNeeded(lineHeight)) {
+        // Reset position to top of new page
+        yPos = margin;
+      }
+      doc.text(text, margin + indent, yPos);
+      yPos += lineHeight;
+    };
+
+    // Title and Header
+    doc.setFontSize(16);
+    writeText('Relatório de Veículos');
+    
+    doc.setFontSize(12);
+    writeText(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`);
+    writeText(`Cidade: ${selectedCity || 'Todas'}`);
+    yPos += lineHeight; // Add extra spacing
+
+    // Resumo Geral
+    writeText('Resumo Geral:');
+    writeText(`Total de Veículos: ${stats.total}`, 6);
+    writeText(`Veículos Liberados: ${stats.released}`, 6);
+    writeText(`Veículos Não Liberados: ${stats.notReleased}`, 6);
+    yPos += lineHeight;
+
+    // Por Cidade
+    addNewPageIfNeeded(20 + (Object.keys(stats.byCity).length * lineHeight * 3));
+    writeText('Por Cidade:');
+    Object.entries(stats.byCity).forEach(([city, data]) => {
+      writeText(`${city}:`, 6);
+      writeText(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 12);
+      yPos += 2; // Small spacing between cities
+    });
+    yPos += lineHeight;
+
+    // Por Tipo de Veículo
+    addNewPageIfNeeded(20 + (Object.keys(stats.byType).length * lineHeight * 3));
+    writeText('Por Tipo de Veículo:');
+    Object.entries(stats.byType).forEach(([type, data]) => {
+      writeText(`${type}:`, 6);
+      writeText(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 12);
+      yPos += 2; // Small spacing between types
+    });
+    yPos += lineHeight;
+
+    // Status das Chaves
+    addNewPageIfNeeded(30);
+    writeText('Status das Chaves:');
+    writeText(`Com Chave: ${stats.byKey.yes}`, 6);
+    writeText(`Sem Chave: ${stats.byKey.no}`, 6);
+    yPos += lineHeight;
+
+    // Por Estado
+    addNewPageIfNeeded(20 + (Object.keys(stats.byState).length * lineHeight));
+    writeText('Por Estado:');
+    Object.entries(stats.byState).forEach(([state, count]) => {
+      writeText(`${state}: ${count}`, 6);
+    });
+
+    // Lista detalhada de veículos
+    addNewPageIfNeeded(40);
+    yPos += lineHeight;
+    writeText('Lista Detalhada de Veículos:');
+    yPos += lineHeight;
+
+    // Use autoTable for vehicle list
+    doc.autoTable({
+      startY: yPos,
+      head: [['Placa', 'Marca/Modelo', 'Tipo', 'Cidade', 'Data Vistoria', 'Data Liberação']],
+      body: filteredVehicles.map(vehicle => [
+        `${vehicle.plate} (${vehicle.state})`,
+        `${vehicle.brand} ${vehicle.model}`,
+        vehicle.vehicleType,
+        vehicle.city,
+        format(new Date(vehicle.inspectionDate), 'dd/MM/yyyy'),
+        vehicle.releaseDate ? format(new Date(vehicle.releaseDate), 'dd/MM/yyyy') : 'Não liberado'
+      ]),
+      margin: { top: 10 },
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 66, 166] }
+>>>>>>> 55a98a4 (Primeiro commit)
     });
 
     doc.save('relatorio-detalhado-veiculos.pdf');
@@ -300,4 +414,8 @@ export default function Reports() {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 55a98a4 (Primeiro commit)

@@ -7,4 +7,8 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 55a98a4 (Primeiro commit)
