@@ -392,8 +392,4 @@ export default function VehicleSearch() {
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 55a98a4 (Primeiro commit)
