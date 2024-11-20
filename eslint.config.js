@@ -25,8 +25,4 @@ export default tseslint.config(
       ],
     },
   }
-<<<<<<< HEAD
 );
-=======
-);
->>>>>>> 55a98a4 (Primeiro commit)
