@@ -1,11 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Vehicle, City, VehicleType } from '../types';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, BarChart } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Pie, Bar, Line } from 'react-chartjs-2';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import html2canvas from 'html2canvas';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
 
 export default function Reports() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -13,6 +41,13 @@ export default function Reports() {
   const [selectedCity, setSelectedCity] = useState<City | ''>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showCharts, setShowCharts] = useState(false);
+  const chartsRef = useRef<HTMLDivElement>(null);
+
+  const chartColors = [
+    '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+    '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+  ];
 
   useEffect(() => {
     fetchVehicles();
@@ -100,6 +135,77 @@ export default function Reports() {
     return stats;
   };
 
+  const generateChartData = (stats: ReturnType<typeof generateStats>) => {
+    const cityData = {
+      labels: Object.keys(stats.byCity),
+      datasets: [
+        {
+          label: 'Total de Veículos',
+          data: Object.values(stats.byCity).map(city => city.total),
+          backgroundColor: chartColors.slice(0, Object.keys(stats.byCity).length),
+          borderWidth: 1
+        }
+      ]
+    };
+
+    const vehicleTypeData = {
+      labels: Object.keys(stats.byType),
+      datasets: [
+        {
+          label: 'Liberados',
+          data: Object.values(stats.byType).map(type => type.released),
+          backgroundColor: '#10B981',
+          borderColor: '#059669',
+          borderWidth: 1,
+          type: 'bar'
+        },
+        {
+          label: 'Não Liberados',
+          data: Object.values(stats.byType).map(type => type.notReleased),
+          backgroundColor: '#EF4444',
+          borderColor: '#DC2626',
+          borderWidth: 1,
+          type: 'bar'
+        },
+        {
+          label: 'Total',
+          data: Object.values(stats.byType).map(type => type.total),
+          borderColor: '#4F46E5',
+          borderWidth: 2,
+          type: 'line',
+          fill: false
+        }
+      ]
+    };
+
+    const keyStatusData = {
+      labels: ['Com Chave', 'Sem Chave'],
+      datasets: [
+        {
+          data: [stats.byKey.yes, stats.byKey.no],
+          backgroundColor: ['#10B981', '#EF4444'],
+          borderWidth: 1
+        }
+      ]
+    };
+
+    return { cityData, vehicleTypeData, keyStatusData };
+  };
+
+  const exportChartsToPNG = async () => {
+    if (!chartsRef.current) return;
+
+    try {
+      const canvas = await html2canvas(chartsRef.current);
+      const link = document.createElement('a');
+      link.download = 'graficos-relatorio.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error exporting charts:', error);
+    }
+  };
+
   const exportToPDF = (filteredVehicles: Vehicle[]) => {
     const doc = new jsPDF();
     const stats = generateStats(filteredVehicles);
@@ -120,70 +226,61 @@ export default function Reports() {
 
     const writeText = (text: string, indent: number = 0) => {
       if (addNewPageIfNeeded(lineHeight)) {
-        // Reset position to top of new page
         yPos = margin;
       }
       doc.text(text, margin + indent, yPos);
       yPos += lineHeight;
     };
 
-    // Title and Header
     doc.setFontSize(16);
     writeText('Relatório de Veículos');
     
     doc.setFontSize(12);
     writeText(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`);
     writeText(`Cidade: ${selectedCity || 'Todas'}`);
-    yPos += lineHeight; // Add extra spacing
+    yPos += lineHeight;
 
-    // Resumo Geral
     writeText('Resumo Geral:');
     writeText(`Total de Veículos: ${stats.total}`, 6);
     writeText(`Veículos Liberados: ${stats.released}`, 6);
     writeText(`Veículos Não Liberados: ${stats.notReleased}`, 6);
     yPos += lineHeight;
 
-    // Por Cidade
     addNewPageIfNeeded(20 + (Object.keys(stats.byCity).length * lineHeight * 3));
     writeText('Por Cidade:');
     Object.entries(stats.byCity).forEach(([city, data]) => {
       writeText(`${city}:`, 6);
       writeText(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 12);
-      yPos += 2; // Small spacing between cities
+      yPos += 2;
     });
     yPos += lineHeight;
 
-    // Por Tipo de Veículo
     addNewPageIfNeeded(20 + (Object.keys(stats.byType).length * lineHeight * 3));
     writeText('Por Tipo de Veículo:');
     Object.entries(stats.byType).forEach(([type, data]) => {
       writeText(`${type}:`, 6);
       writeText(`Total: ${data.total} | Liberados: ${data.released} | Não Liberados: ${data.notReleased}`, 12);
-      yPos += 2; // Small spacing between types
+      yPos += 2;
     });
     yPos += lineHeight;
 
-    // Status das Chaves
     addNewPageIfNeeded(30);
     writeText('Status das Chaves:');
     writeText(`Com Chave: ${stats.byKey.yes}`, 6);
     writeText(`Sem Chave: ${stats.byKey.no}`, 6);
     yPos += lineHeight;
 
-    // Por Estado
     addNewPageIfNeeded(20 + (Object.keys(stats.byState).length * lineHeight));
     writeText('Por Estado:');
     Object.entries(stats.byState).forEach(([state, count]) => {
       writeText(`${state}: ${count}`, 6);
     });
 
-    // Lista detalhada de veículos
     addNewPageIfNeeded(40);
     yPos += lineHeight;
     writeText('Lista Detalhada de Veículos:');
     yPos += lineHeight;
 
-    // Use autoTable for vehicle list
     doc.autoTable({
       startY: yPos,
       head: [['Placa', 'Marca/Modelo', 'Tipo', 'Cidade', 'Data Vistoria', 'Data Liberação']],
@@ -213,6 +310,22 @@ export default function Reports() {
 
   const filteredVehicles = filterVehicles();
   const stats = generateStats(filteredVehicles);
+  const { cityData, vehicleTypeData, keyStatusData } = generateChartData(stats);
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      datalabels: {
+        color: '#fff',
+        formatter: (value: number) => `${value}`,
+        display: (context: any) => context.dataset.data[context.dataIndex] > 0
+      },
+      legend: {
+        position: 'bottom' as const
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -261,14 +374,63 @@ export default function Reports() {
           </div>
         </div>
 
-        <button
-          onClick={() => exportToPDF(filteredVehicles)}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center justify-center"
-        >
-          <Download className="h-5 w-5 mr-2" />
-          Exportar Relatório Detalhado (PDF)
-        </button>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => exportToPDF(filteredVehicles)}
+            className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center justify-center"
+          >
+            <Download className="h-5 w-5 mr-2" />
+            Exportar Relatório (PDF)
+          </button>
+
+          <button
+            onClick={() => setShowCharts(!showCharts)}
+            className="flex-1 bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-700 transition flex items-center justify-center"
+          >
+            <BarChart className="h-5 w-5 mr-2" />
+            {showCharts ? 'Ocultar Gráficos' : 'Mostrar Gráficos'}
+          </button>
+        </div>
       </div>
+
+      {showCharts && (
+        <div className="bg-white p-6 rounded-lg shadow-md" ref={chartsRef}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold">Gráficos</h3>
+            <button
+              onClick={exportChartsToPNG}
+              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar Gráficos (PNG)
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="h-[400px]">
+              <h4 className="text-lg font-medium mb-4">Distribuição por Cidade</h4>
+              <Pie data={cityData} options={chartOptions} />
+            </div>
+
+            <div className="h-[400px]">
+              <h4 className="text-lg font-medium mb-4">Status das Chaves</h4>
+              <Pie data={keyStatusData} options={chartOptions} />
+            </div>
+
+            <div className="h-[400px] lg:col-span-2">
+              <h4 className="text-lg font-medium mb-4">Análise por Tipo de Veículo</h4>
+              <Bar data={vehicleTypeData} options={{
+                ...chartOptions,
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                }
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
