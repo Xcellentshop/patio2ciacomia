@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Vehicle, City, VehicleType } from '../types';
@@ -18,7 +18,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { Pie, Bar, Line } from 'react-chartjs-2';
+import { Pie, Bar, Line } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import html2canvas from 'html2canvas';
 
@@ -55,10 +55,10 @@ export default function Reports() {
 
   const fetchVehicles = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'vehicles'));
+      const querySnapshot = await getDocs(collection(db,'vehicles'));
       const vehicleData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+       ...doc.data()
       })) as Vehicle[];
       setVehicles(vehicleData);
     } catch (error) {
@@ -68,10 +68,13 @@ export default function Reports() {
     }
   };
 
+  const cities = ['Medianeira', 'SMI', 'Missal', 'Itaipulândia', 'Serranópolis'];
+
   const filterVehicles = () => {
     return vehicles.filter(vehicle => {
       const matchesCity = selectedCity === '' || vehicle.city === selectedCity;
-      const matchesDateRange = (!startDate && !endDate) || 
+      console.log('matchesCity:', matchesCity);
+      const matchesDateRange = (!startDate &&!endDate) || 
         (vehicle.inspectionDate >= startDate && vehicle.inspectionDate <= endDate);
       return matchesCity && matchesDateRange;
     });
@@ -81,7 +84,7 @@ export default function Reports() {
     const stats = {
       total: filteredVehicles.length,
       released: filteredVehicles.filter(v => v.releaseDate).length,
-      notReleased: filteredVehicles.filter(v => !v.releaseDate).length,
+      notReleased: filteredVehicles.filter(v =>!v.releaseDate).length,
       byType: {} as Record<VehicleType, {
         total: number,
         released: number,
@@ -112,7 +115,7 @@ export default function Reports() {
         stats.byType[vehicle.vehicleType].notReleased++;
       }
       
-      vehicle.hasKey ? stats.byKey.yes++ : stats.byKey.no++;
+      vehicle.hasKey? stats.byKey.yes++ : stats.byKey.no++;
       
       stats.byState[vehicle.state] = (stats.byState[vehicle.state] || 0) + 1;
       
@@ -236,7 +239,7 @@ export default function Reports() {
     writeText('Relatório de Veículos');
     
     doc.setFontSize(12);
-    writeText(`Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`);
+    writeText(`Período: ${startDate? format(new Date(startDate), 'dd/MM/yyyy') : 'Início'} até ${endDate? format(new Date(endDate), 'dd/MM/yyyy') : 'Fim'}`);
     writeText(`Cidade: ${selectedCity || 'Todas'}`);
     yPos += lineHeight;
 
@@ -264,20 +267,9 @@ export default function Reports() {
     });
     yPos += lineHeight;
 
-    addNewPageIfNeeded(30);
+    addNewPageIfNeeded(40);
     writeText('Status das Chaves:');
     writeText(`Com Chave: ${stats.byKey.yes}`, 6);
-    writeText(`Sem Chave: ${stats.byKey.no}`, 6);
-    yPos += lineHeight;
-
-    addNewPageIfNeeded(20 + (Object.keys(stats.byState).length * lineHeight));
-    writeText('Por Estado:');
-    Object.entries(stats.byState).forEach(([state, count]) => {
-      writeText(`${state}: ${count}`, 6);
-    });
-
-    addNewPageIfNeeded(40);
-    yPos += lineHeight;
     writeText('Lista Detalhada de Veículos:');
     yPos += lineHeight;
 
