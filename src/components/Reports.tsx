@@ -70,7 +70,7 @@ export default function Reports() {
 
   const filterVehicles = () => {
     return vehicles.filter(vehicle => {
-      const matchesCity = !selectedCity || vehicle.city === selectedCity;
+      const matchesCity = selectedCity === '' || vehicle.city === selectedCity;
       const matchesDateRange = (!startDate && !endDate) || 
         (vehicle.inspectionDate >= startDate && vehicle.inspectionDate <= endDate);
       return matchesCity && matchesDateRange;
