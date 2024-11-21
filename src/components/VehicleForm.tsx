@@ -61,10 +61,13 @@ export default function VehicleForm() {
       const vehicleDoc = await getDoc(doc(db, 'vehicles', id!));
       if (vehicleDoc.exists()) {
         const vehicleData = vehicleDoc.data() as Vehicle;
+        const inspectionDate = new Date(vehicleData.inspectionDate);
+        const releaseDate = vehicleData.releaseDate ? new Date(vehicleData.releaseDate) : null;
+
         setFormData({
           plate: vehicleData.plate,
           state: vehicleData.state,
-          inspectionDate: vehicleData.inspectionDate,
+          inspectionDate: inspectionDate.toISOString().split('T')[0],
           brand: vehicleData.brand,
           model: vehicleData.model,
           vehicleType: vehicleData.vehicleType,
@@ -73,8 +76,9 @@ export default function VehicleForm() {
           city: vehicleData.city,
           bouTrv: vehicleData.bouTrv || '',
           hasNoPlate: vehicleData.hasNoPlate || false,
-          releaseDate: vehicleData.releaseDate || ''
+          releaseDate: releaseDate ? releaseDate.toISOString().split('T')[0] : ''
         });
+
         const lastAutoNumber = await getLastAutoRegistrationNumber();
         if (vehicleData.registrationNumber < lastAutoNumber - 100) {
           setUseExternalRegistration(true);
@@ -127,22 +131,35 @@ export default function VehicleForm() {
         registrationNumber = await getLastAutoRegistrationNumber() + 1;
       }
 
+      const inspectionDate = new Date(formData.inspectionDate);
+      inspectionDate.setUTCHours(12, 0, 0, 0);
+
+      let releaseDate = null;
+      if (formData.releaseDate) {
+        releaseDate = new Date(formData.releaseDate);
+        releaseDate.setUTCHours(12, 0, 0, 0);
+      }
+
+      const vehicleData = {
+        ...formData,
+        inspectionDate: inspectionDate.toISOString(),
+        releaseDate: releaseDate ? releaseDate.toISOString() : null,
+      };
+
       if (isEditing) {
         await updateDoc(doc(db, 'vehicles', id!), {
-          ...formData,
+          ...vehicleData,
           registrationNumber,
-          releaseDate: formData.releaseDate || null,
           updatedAt: new Date().toISOString()
         });
         toast.success('Veículo atualizado com sucesso!');
       } else {
-        const vehicleData: Omit<Vehicle, 'id'> = {
-          ...formData,
+        const newVehicleData: Omit<Vehicle, 'id'> = {
+          ...vehicleData,
           registrationNumber,
-          releaseDate: null,
           createdAt: new Date().toISOString()
         };
-        await addDoc(collection(db, 'vehicles'), vehicleData);
+        await addDoc(collection(db, 'vehicles'), newVehicleData);
         toast.success('Veículo cadastrado com sucesso!');
       }
       navigate('/');
