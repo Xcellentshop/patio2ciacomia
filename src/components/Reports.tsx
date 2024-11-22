@@ -303,7 +303,7 @@ export default function Reports() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
       </div>
     );
   }
@@ -322,23 +322,47 @@ export default function Reports() {
         display: (context: any) => context.dataset.data[context.dataIndex] > 0
       },
       legend: {
-        position: 'bottom' as const
+        position: 'bottom' as const,
+        labels: {
+          color: 'rgb(156, 163, 175)',
+          font: {
+            size: 12
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: 'rgb(156, 163, 175)'
+        },
+        grid: {
+          color: 'rgba(156, 163, 175, 0.1)'
+        }
+      },
+      y: {
+        ticks: {
+          color: 'rgb(156, 163, 175)'
+        },
+        grid: {
+          color: 'rgba(156, 163, 175, 0.1)'
+        }
       }
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Relatórios</h2>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Relatórios</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Cidade
             </label>
             <select
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value as City)}
             >
@@ -350,24 +374,24 @@ export default function Reports() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Data Inicial
             </label>
             <input
               type="date"
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Data Final
             </label>
             <input
               type="date"
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
@@ -377,7 +401,7 @@ export default function Reports() {
         <div className="flex space-x-4">
           <button
             onClick={() => exportToPDF(filteredVehicles)}
-            className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center justify-center"
+            className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition flex items-center justify-center"
           >
             <Download className="h-5 w-5 mr-2" />
             Exportar Relatório (PDF)
@@ -385,7 +409,7 @@ export default function Reports() {
 
           <button
             onClick={() => setShowCharts(!showCharts)}
-            className="flex-1 bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-700 transition flex items-center justify-center"
+            className="flex-1 bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition flex items-center justify-center"
           >
             <BarChart className="h-5 w-5 mr-2" />
             {showCharts ? 'Ocultar Gráficos' : 'Mostrar Gráficos'}
@@ -394,12 +418,12 @@ export default function Reports() {
       </div>
 
       {showCharts && (
-        <div className="bg-white p-6 rounded-lg shadow-md" ref={chartsRef}>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md" ref={chartsRef}>
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold">Gráficos</h3>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Gráficos</h3>
             <button
               onClick={exportChartsToPNG}
-              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition flex items-center"
+              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition flex items-center"
             >
               <Download className="h-4 w-4 mr-2" />
               Exportar Gráficos (PNG)
@@ -407,87 +431,80 @@ export default function Reports() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="h-[400px]">
-              <h4 className="text-lg font-medium mb-4">Distribuição por Cidade</h4>
+            <div className="h-[400px] bg-white dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">Distribuição por Cidade</h4>
               <Pie data={cityData} options={chartOptions} />
             </div>
 
-            <div className="h-[400px]">
-              <h4 className="text-lg font-medium mb-4">Status das Chaves</h4>
+            <div className="h-[400px] bg-white dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">Status das Chaves</h4>
               <Pie data={keyStatusData} options={chartOptions} />
             </div>
 
-            <div className="h-[400px] lg:col-span-2">
-              <h4 className="text-lg font-medium mb-4">Análise por Tipo de Veículo</h4>
-              <Bar data={vehicleTypeData} options={{
-                ...chartOptions,
-                scales: {
-                  y: {
-                    beginAtZero: true
-                  }
-                }
-              }} />
+            <div className="h-[400px] lg:col-span-2 bg-white dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">Análise por Tipo de Veículo</h4>
+              <Bar data={vehicleTypeData} options={chartOptions} />
             </div>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Resumo Geral</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Resumo Geral</h3>
           <div className="space-y-2">
-            <p>Total: <span className="font-bold text-indigo-600">{stats.total}</span></p>
-            <p>Liberados: <span className="font-bold text-green-600">{stats.released}</span></p>
-            <p>Não Liberados: <span className="font-bold text-red-600">{stats.notReleased}</span></p>
+            <p className="text-gray-600 dark:text-gray-300">Total: <span className="font-bold text-indigo-600 dark:text-indigo-400">{stats.total}</span></p>
+            <p className="text-gray-600 dark:text-gray-300">Liberados: <span className="font-bold text-green-600 dark:text-green-400">{stats.released}</span></p>
+            <p className="text-gray-600 dark:text-gray-300">Não Liberados: <span className="font-bold text-red-600 dark:text-red-400">{stats.notReleased}</span></p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Cidade</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Por Cidade</h3>
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {Object.entries(stats.byCity).map(([city, data]) => (
-              <div key={city} className="border-b pb-2">
-                <p className="font-medium">{city}</p>
+              <div key={city} className="border-b border-gray-200 dark:border-gray-700 pb-2">
+                <p className="font-medium text-gray-800 dark:text-white">{city}</p>
                 <div className="pl-4 text-sm">
-                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
-                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
-                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Total: <span className="font-bold text-indigo-600 dark:text-indigo-400">{data.total}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Liberados: <span className="font-bold text-green-600 dark:text-green-400">{data.released}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Não Liberados: <span className="font-bold text-red-600 dark:text-red-400">{data.notReleased}</span></p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Tipo de Veículo</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Por Tipo de Veículo</h3>
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {Object.entries(stats.byType).map(([type, data]) => (
-              <div key={type} className="border-b pb-2">
-                <p className="font-medium">{type}</p>
+              <div key={type} className="border-b border-gray-200 dark:border-gray-700 pb-2">
+                <p className="font-medium text-gray-800 dark:text-white">{type}</p>
                 <div className="pl-4 text-sm">
-                  <p>Total: <span className="font-bold text-indigo-600">{data.total}</span></p>
-                  <p>Liberados: <span className="font-bold text-green-600">{data.released}</span></p>
-                  <p>Não Liberados: <span className="font-bold text-red-600">{data.notReleased}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Total: <span className="font-bold text-indigo-600 dark:text-indigo-400">{data.total}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Liberados: <span className="font-bold text-green-600 dark:text-green-400">{data.released}</span></p>
+                  <p className="text-gray-600 dark:text-gray-300">Não Liberados: <span className="font-bold text-red-600 dark:text-red-400">{data.notReleased}</span></p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Status das Chaves</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Status das Chaves</h3>
           <div className="space-y-2">
-            <p>Com Chave: <span className="font-bold text-green-600">{stats.byKey.yes}</span></p>
-            <p>Sem Chave: <span className="font-bold text-red-600">{stats.byKey.no}</span></p>
+            <p className="text-gray-600 dark:text-gray-300">Com Chave: <span className="font-bold text-green-600 dark:text-green-400">{stats.byKey.yes}</span></p>
+            <p className="text-gray-600 dark:text-gray-300">Sem Chave: <span className="font-bold text-red-600 dark:text-red-400">{stats.byKey.no}</span></p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Por Estado</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Por Estado</h3>
           <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
             {Object.entries(stats.byState).map(([state, count]) => (
-              <p key={state}>
-                {state}: <span className="font-bold text-indigo-600">{count}</span>
+              <p key={state} className="text-gray-600 dark:text-gray-300">
+                {state}: <span className="font-bold text-indigo-600 dark:text-indigo-400">{count}</span>
               </p>
             ))}
           </div>
