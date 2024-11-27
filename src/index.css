@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.chat-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.chat-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.chat-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.chat-exit-active {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Estilos personalizados para o calendário */
+.calendar-custom.fc-dark {
+  --fc-border-color: theme('colors.gray.700');
+  --fc-page-bg-color: theme('colors.gray.800');
+  --fc-neutral-bg-color: theme('colors.gray.700');
+  --fc-list-event-hover-bg-color: theme('colors.gray.700');
+  --fc-today-bg-color: theme('colors.violet.900/0.3');
+  --fc-event-text-color: theme('colors.white');
+  --fc-event-border-color: transparent;
+}
+
+/* Corrigindo cores do texto no modo escuro */
+.calendar-custom.fc-dark,
+.calendar-custom.fc-dark .fc-toolbar-title,
+.calendar-custom.fc-dark .fc-col-header-cell-cushion,
+.calendar-custom.fc-dark .fc-daygrid-day-number,
+.calendar-custom.fc-dark .fc-event-title,
+.calendar-custom.fc-dark .fc-event-time,
+.calendar-custom.fc-dark .fc-list-event-title,
+.calendar-custom.fc-dark .fc-list-event-time,
+.calendar-custom.fc-dark .fc-timegrid-slot-label-cushion,
+.calendar-custom.fc-dark .fc-timegrid-axis-cushion,
+.calendar-custom.fc-dark .fc-col-header,
+.calendar-custom.fc-dark .fc-scrollgrid,
+.calendar-custom.fc-dark .fc-timegrid-axis,
+.calendar-custom.fc-dark .fc-timegrid-slot,
+.calendar-custom.fc-dark .fc-daygrid-day-frame,
+.calendar-custom.fc-dark .fc-daygrid-day-events,
+.calendar-custom.fc-dark .fc-daygrid-event,
+.calendar-custom.fc-dark .fc-event-main,
+.calendar-custom.fc-dark .fc-toolbar {
+  color: theme('colors.gray.100') !important;
+}
+
+.calendar-custom.fc-dark .fc-button {
+  background-color: theme('colors.violet.600');
+  border-color: theme('colors.violet.700');
+  color: theme('colors.white');
+}
+
+.calendar-custom.fc-dark .fc-button:hover {
+  background-color: theme('colors.violet.700');
+  border-color: theme('colors.violet.800');
+}
+
+.calendar-custom.fc-dark .fc-button-active {
+  background-color: theme('colors.violet.800') !important;
+  border-color: theme('colors.violet.900') !important;
+}
+
+.calendar-custom.fc-dark .fc-event {
+  border-radius: theme('borderRadius.md');
+  background-color: theme('colors.violet.600');
+  border-color: theme('colors.violet.700');
+}
+
+.calendar-custom.fc-dark .fc-day-today {
+  background-color: theme('colors.violet.900/0.3') !important;
+}
+
+.calendar-custom.fc-dark .fc-highlight {
+  background-color: theme('colors.violet.600/0.3') !important;
+}
+
+/* Ajustes adicionais para melhor legibilidade no modo escuro */
+.calendar-custom.fc-dark .fc-day-other .fc-daygrid-day-number {
+  color: theme('colors.gray.400') !important;
+}
+
+.calendar-custom.fc-dark .fc-day-today .fc-daygrid-day-number {
+  color: theme('colors.violet.200') !important;
+}
+
+.calendar-custom.fc-dark .fc-timegrid-now-indicator-line {
+  border-color: theme('colors.violet.400');
+}
+
+.calendar-custom.fc-dark .fc-timegrid-now-indicator-arrow {
+  border-color: theme('colors.violet.400');
+  color: theme('colors.violet.400');
+}
+
+.calendar-custom.fc-dark .fc-more-link {
+  color: theme('colors.violet.300') !important;
+}
+
+/* Forçar cores claras para todos os textos no modo escuro */
+.calendar-custom.fc-dark .fc-daygrid-day-top a,
+.calendar-custom.fc-dark .fc-scrollgrid-sync-inner a,
+.calendar-custom.fc-dark .fc-col-header-cell a {
+  color: theme('colors.gray.100') !important;
+}
+
+/* Garantir que os eventos mantenham o texto branco */
+.calendar-custom.fc-dark .fc-event-main-frame {
+  color: theme('colors.white') !important;
+}
+
+/* Ajustar cores dos botões de navegação */
+.calendar-custom.fc-dark .fc-prev-button,
+.calendar-custom.fc-dark .fc-next-button {
+  color: theme('colors.white') !important;
+}
